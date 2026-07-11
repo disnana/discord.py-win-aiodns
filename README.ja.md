@@ -39,7 +39,8 @@ fallback を使う `auto`、`public`、`custom` は、到達不能な DNS サー
 - discord.py 2.5 以降
 
 Python 3.9 では互換性のある aiodns 3.6 系を、Python 3.10 以降では aiodns 4 以降を
-インストールします。
+インストールします。本番環境では、依存関係の最新セキュリティ修正を利用できる
+Python 3.10 以降を推奨します。
 
 ## インストール
 

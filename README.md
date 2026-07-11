@@ -39,7 +39,8 @@ a whole will be faster, and it does not hide connection failures.
 - discord.py 2.5 or newer
 
 Python 3.9 installs the compatible aiodns 3.6 series. Python 3.10 and newer
-install aiodns 4 or newer.
+install aiodns 4 or newer. Python 3.10 or newer is recommended for production,
+so current security fixes in the dependency ecosystem are available.
 
 ## Installation
 

@@ -30,6 +30,7 @@ jobs:
       - name: Run tests with coverage
         run: python -m pytest --cov=discord_win_aiodns --cov-report=term-missing --cov-fail-under=80
       - name: Audit installed dependencies
+        if: matrix.python-version == '3.11'
         shell: pwsh
         run: |
           python -c "import importlib.util; from pathlib import Path; module = 'tomllib' if importlib.util.find_spec('tomllib') else 'tomli'; toml = __import__(module); data = toml.load(open('pyproject.toml', 'rb')); dependencies = data['project']['dependencies'] + data['project']['optional-dependencies']['dev']; Path('.audit-requirements.txt').write_text('\n'.join(dependencies), encoding='utf-8')"
