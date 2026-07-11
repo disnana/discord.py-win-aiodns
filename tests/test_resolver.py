@@ -1,5 +1,6 @@
 import asyncio
 import socket
+import sys
 import unittest
 from unittest import mock
 
@@ -50,6 +51,20 @@ class FallbackResolverTests(unittest.TestCase):
         self.assertEqual(result, [('resolved', 'discord.com', 443, socket.AF_INET)])
         async_resolver.assert_called_once_with()
 
+    def test_auto_mode_uses_system_resolver_after_public_dns_fails(self):
+        with mock.patch(
+            'discord_win_aiodns.aiohttp.AsyncResolver', side_effect=[FailingResolver(), FailingResolver()]
+        ):
+            with mock.patch('discord_win_aiodns.aiohttp.ThreadedResolver', return_value=WorkingResolver()):
+                resolver = _FallbackResolver('auto', public_fallback=True, nameservers=None)
+                with self.assertLogs('discord_win_aiodns', level='INFO') as logs:
+                    result = asyncio.run(resolver.resolve('discord.com', 443, socket.AF_INET))
+
+        self.assertEqual(result, [('resolved', 'discord.com', 443, socket.AF_INET)])
+        self.assertTrue(
+            any('the Windows system resolver resolved discord.com successfully' in entry for entry in logs.output)
+        )
+
     def test_public_mode_configures_cloudflare_dns(self):
         with mock.patch('discord_win_aiodns.aiohttp.AsyncResolver', return_value=WorkingResolver()) as async_resolver:
             with mock.patch('discord_win_aiodns.aiohttp.ThreadedResolver', return_value=WorkingResolver()):
@@ -80,3 +95,38 @@ class FallbackResolverTests(unittest.TestCase):
 
         async_resolver.assert_called_once_with(nameservers=nameservers)
         asyncio.run(resolver.close())
+
+    def test_custom_mode_uses_system_resolver_after_dns_failure(self):
+        with mock.patch('discord_win_aiodns.aiohttp.AsyncResolver', return_value=FailingResolver()):
+            with mock.patch('discord_win_aiodns.aiohttp.ThreadedResolver', return_value=WorkingResolver()):
+                resolver = _FallbackResolver('custom', public_fallback=True, nameservers=['1.1.1.1'])
+                result = asyncio.run(resolver.resolve('discord.com', 443, socket.AF_INET))
+
+        self.assertEqual(result, [('resolved', 'discord.com', 443, socket.AF_INET)])
+
+
+class RunValidationTests(unittest.TestCase):
+    def test_rejects_invalid_resolver_mode(self):
+        from discord_win_aiodns import run
+
+        with self.assertRaises(ValueError):
+            run(lambda connector: None, 'token', resolver='invalid')
+
+    def test_rejects_empty_custom_nameservers(self):
+        from discord_win_aiodns import run
+
+        with self.assertRaises(ValueError):
+            run(lambda connector: None, 'token', resolver='custom')
+
+    def test_rejects_nameservers_without_custom_mode(self):
+        from discord_win_aiodns import run
+
+        with self.assertRaises(ValueError):
+            run(lambda connector: None, 'token', nameservers=['1.1.1.1'])
+
+    def test_rejects_non_windows_platform(self):
+        from discord_win_aiodns import run
+
+        with mock.patch.object(sys, 'platform', 'linux'):
+            with self.assertRaises(RuntimeError):
+                run(lambda connector: None, 'token')
