@@ -32,7 +32,7 @@ jobs:
       - name: Audit installed dependencies
         shell: pwsh
         run: |
-          python -c "import tomllib; from pathlib import Path; data = tomllib.load(open('pyproject.toml', 'rb')); dependencies = data['project']['dependencies'] + data['project']['optional-dependencies']['dev']; Path('.audit-requirements.txt').write_text('\n'.join(dependencies), encoding='utf-8')"
+          python -c "import importlib.util; from pathlib import Path; module = 'tomllib' if importlib.util.find_spec('tomllib') else 'tomli'; toml = __import__(module); data = toml.load(open('pyproject.toml', 'rb')); dependencies = data['project']['dependencies'] + data['project']['optional-dependencies']['dev']; Path('.audit-requirements.txt').write_text('\n'.join(dependencies), encoding='utf-8')"
           python -m pip_audit --strict --requirement .audit-requirements.txt --cache-dir .pip-audit-cache
       - name: Build distributions
         run: python -m build
