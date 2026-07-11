@@ -6,7 +6,7 @@ __pycache__/
 .pip-audit-cache/
 .audit-requirements.txt
 .ruff_cache/
-.venv/
+.venv*/
 build/
 dist/
 venv/
