@@ -20,6 +20,8 @@ ClientT = TypeVar('ClientT', bound='discord.Client')
 ClientFactory = Callable[[aiohttp.BaseConnector], ClientT]
 ResolverMode = Literal['auto', 'aiodns', 'system', 'public', 'custom']
 PUBLIC_NAMESERVERS = ('1.1.1.1', '1.0.0.1')
+FALLBACK_TIMEOUT = 1.0
+FALLBACK_TRIES = 1
 _log = logging.getLogger(__name__)
 
 
@@ -33,11 +35,13 @@ class _FallbackResolver(AbstractResolver):
         self._fallback_success_reported = False
         self._aiodns: Optional[aiohttp.AsyncResolver] = None
         if mode == 'public':
-            self._aiodns = aiohttp.AsyncResolver(nameservers=PUBLIC_NAMESERVERS)
+            self._aiodns = _make_fast_resolver(nameservers=PUBLIC_NAMESERVERS)
         elif mode == 'custom':
             assert nameservers is not None
-            self._aiodns = aiohttp.AsyncResolver(nameservers=nameservers)
-        elif mode != 'system':
+            self._aiodns = _make_fast_resolver(nameservers=nameservers)
+        elif mode == 'auto':
+            self._aiodns = _make_fast_resolver()
+        elif mode == 'aiodns':
             self._aiodns = aiohttp.AsyncResolver()
         self._threaded: aiohttp.ThreadedResolver = aiohttp.ThreadedResolver()
 
@@ -64,7 +68,7 @@ class _FallbackResolver(AbstractResolver):
                     await previous_resolver.close()
                     self._mode = 'public'
                     self._fallback_active = True
-                    self._aiodns = aiohttp.AsyncResolver(nameservers=PUBLIC_NAMESERVERS)
+                    self._aiodns = _make_fast_resolver(nameservers=PUBLIC_NAMESERVERS)
                     continue
 
                 if self._mode not in ('auto', 'public', 'custom'):
@@ -104,6 +108,12 @@ def _is_transport_error(exc: OSError) -> bool:
     cause = exc.__cause__
     status = cause.args[0] if cause is not None and cause.args else None
     return status in (11, 12, 26)  # ECONNREFUSED, ETIMEOUT, ENOSERVER
+
+
+def _make_fast_resolver(*, nameservers: Optional[Sequence[str]] = None) -> aiohttp.AsyncResolver:
+    if nameservers is None:
+        return aiohttp.AsyncResolver(timeout=FALLBACK_TIMEOUT, tries=FALLBACK_TRIES)
+    return aiohttp.AsyncResolver(nameservers=nameservers, timeout=FALLBACK_TIMEOUT, tries=FALLBACK_TRIES)
 
 
 def _make_connector(

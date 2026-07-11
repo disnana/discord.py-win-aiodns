@@ -24,6 +24,11 @@ The package logs a warning when it changes stage. Once a fallback resolves a
 host successfully, it logs one `INFO` message naming the active stage. A
 normal successful automatic `aiodns` lookup produces no extra log entry.
 
+Fallback-oriented modes (`auto`, `public`, and `custom`) use one 1-second
+aiodns attempt per stage so an unreachable DNS server does not delay startup
+for the resolver's default retry period. The strict `aiodns` mode preserves
+aiodns's own timeout and retry defaults.
+
 Only DNS resolution is affected. This package does not guarantee that a bot as
 a whole will be faster, and it does not hide connection failures.
 

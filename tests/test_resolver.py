@@ -4,7 +4,7 @@ import sys
 import unittest
 from unittest import mock
 
-from discord_win_aiodns import PUBLIC_NAMESERVERS, _FallbackResolver
+from discord_win_aiodns import FALLBACK_TIMEOUT, FALLBACK_TRIES, PUBLIC_NAMESERVERS, _FallbackResolver
 
 
 class FailingResolver:
@@ -37,7 +37,13 @@ class FallbackResolverTests(unittest.TestCase):
                     result = asyncio.run(resolver.resolve('discord.com', 443, socket.AF_INET))
 
         self.assertEqual(result, [('resolved', 'discord.com', 443, socket.AF_INET)])
-        self.assertEqual(async_resolver.call_args_list, [mock.call(), mock.call(nameservers=PUBLIC_NAMESERVERS)])
+        self.assertEqual(
+            async_resolver.call_args_list,
+            [
+                mock.call(timeout=FALLBACK_TIMEOUT, tries=FALLBACK_TRIES),
+                mock.call(nameservers=PUBLIC_NAMESERVERS, timeout=FALLBACK_TIMEOUT, tries=FALLBACK_TRIES),
+            ],
+        )
         self.assertTrue(
             any('DNS fallback is active; Cloudflare DNS resolved discord.com successfully' in entry for entry in logs.output)
         )
@@ -49,7 +55,7 @@ class FallbackResolverTests(unittest.TestCase):
                 result = asyncio.run(resolver.resolve('discord.com', 443, socket.AF_INET))
 
         self.assertEqual(result, [('resolved', 'discord.com', 443, socket.AF_INET)])
-        async_resolver.assert_called_once_with()
+        async_resolver.assert_called_once_with(timeout=FALLBACK_TIMEOUT, tries=FALLBACK_TRIES)
 
     def test_auto_mode_uses_system_resolver_after_public_dns_fails(self):
         with mock.patch(
@@ -70,7 +76,9 @@ class FallbackResolverTests(unittest.TestCase):
             with mock.patch('discord_win_aiodns.aiohttp.ThreadedResolver', return_value=WorkingResolver()):
                 resolver = _FallbackResolver('public', public_fallback=True, nameservers=None)
 
-        async_resolver.assert_called_once_with(nameservers=PUBLIC_NAMESERVERS)
+        async_resolver.assert_called_once_with(
+            nameservers=PUBLIC_NAMESERVERS, timeout=FALLBACK_TIMEOUT, tries=FALLBACK_TRIES
+        )
         asyncio.run(resolver.close())
 
     def test_does_not_fallback_for_missing_name(self):
@@ -93,7 +101,7 @@ class FallbackResolverTests(unittest.TestCase):
             with mock.patch('discord_win_aiodns.aiohttp.ThreadedResolver', return_value=WorkingResolver()):
                 resolver = _FallbackResolver('custom', public_fallback=True, nameservers=nameservers)
 
-        async_resolver.assert_called_once_with(nameservers=nameservers)
+        async_resolver.assert_called_once_with(nameservers=nameservers, timeout=FALLBACK_TIMEOUT, tries=FALLBACK_TRIES)
         asyncio.run(resolver.close())
 
     def test_custom_mode_uses_system_resolver_after_dns_failure(self):
