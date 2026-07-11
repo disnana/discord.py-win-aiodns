@@ -139,13 +139,13 @@ The `CI` workflow runs pytest with coverage, Ruff, mypy, `pip-audit`, and
 distribution checks on Windows for every pull request and push to `main`.
 CodeQL scans the Python source on pull requests, pushes to `main`, and weekly.
 
-After CI succeeds on `main`, the `Publish to PyPI` workflow compares the local
-version with PyPI. It publishes only when the local version is newer than the
-latest released version. It uses PyPI Trusted Publishing, so no PyPI token is
-stored in GitHub secrets.
+After CI succeeds on `main`, its publish job compares the local version with
+PyPI. It publishes only when the local version is newer than the latest
+released version. It uses PyPI Trusted Publishing, so no PyPI token is stored
+in GitHub secrets.
 
 Before the first release, configure a PyPI pending publisher for this GitHub
-repository with workflow file `publish.yml` and environment `pypi`. Then:
+repository with workflow file `ci.yml` and environment `pypi`. Then:
 
 1. Update `version` in `pyproject.toml` and `CHANGELOG.md`.
 2. Commit and push the release changes.

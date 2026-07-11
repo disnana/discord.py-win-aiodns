@@ -140,13 +140,12 @@ py -3 -m build
 coverage、Ruff、mypy、`pip-audit`、配布物検証を行います。CodeQL は Pull Request、
 `main` への push、毎週の定期実行で Python ソースを解析します。
 
-`main` の CI 成功後、`Publish to PyPI` workflow はローカル version と PyPI の
-最新公開 version を比較します。ローカル version が新しい場合だけ build と配布を
-行います。PyPI Trusted Publishing を使うため、PyPI token を GitHub Secrets に保存
-しません。
+`main` の CI 成功後、CI 内の publish job はローカル version と PyPI の最新公開
+version を比較します。ローカル version が新しい場合だけ build と配布を行います。
+PyPI Trusted Publishing を使うため、PyPI token を GitHub Secrets に保存しません。
 
 最初のリリース前に、PyPI でこの GitHub リポジトリに対する pending publisher を
-設定してください。workflow file は `publish.yml`、environment は `pypi` です。
+設定してください。workflow file は `ci.yml`、environment は `pypi` です。
 
 1. `pyproject.toml` の `version` と `CHANGELOG.md` を更新します。
 2. リリース用の変更を commit して push します。
