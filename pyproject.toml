@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "discord-py-win-aiodns"
-version = "0.1.0"
+version = "0.1.1"
 description = "Reliable aiodns resolution for discord.py bots on Windows"
 readme = { file = "README.md", content-type = "text/markdown" }
 requires-python = ">=3.9"
@@ -46,9 +46,9 @@ dev = [
 ]
 
 [project.urls]
-Changelog = "https://github.com/disnana/discord.py-win-aiodns-fix/blob/main/CHANGELOG.md"
-Issues = "https://github.com/disnana/discord.py-win-aiodns-fix/issues"
-Source = "https://github.com/disnana/discord.py-win-aiodns-fix"
+Changelog = "https://github.com/disnana/discord.py-win-aiodns/blob/main/CHANGELOG.md"
+Issues = "https://github.com/disnana/discord.py-win-aiodns/issues"
+Source = "https://github.com/disnana/discord.py-win-aiodns"
 
 [tool.setuptools.packages.find]
 where = ["src"]

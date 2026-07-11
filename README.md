@@ -1,6 +1,6 @@
 # discord-py-win-aiodns
 
-[日本語 README](README.ja.md)
+[日本語 README](https://github.com/disnana/discord.py-win-aiodns/blob/main/README.ja.md)
 
 `discord-py-win-aiodns` is an opt-in Windows runner for `discord.py` bots that
 uses `aiodns` without modifying or monkeypatching `discord.py`.
@@ -163,8 +163,8 @@ repository with workflow file `ci.yml` and environment `pypi`. Then:
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md). Security reports are covered by
-[SECURITY.md](SECURITY.md).
+See [CONTRIBUTING.md](https://github.com/disnana/discord.py-win-aiodns/blob/main/CONTRIBUTING.md). Security reports are covered by
+[SECURITY.md](https://github.com/disnana/discord.py-win-aiodns/blob/main/SECURITY.md).
 
 ## License
 
