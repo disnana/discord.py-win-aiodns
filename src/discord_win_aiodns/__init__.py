@@ -59,7 +59,9 @@ class _FallbackResolver(AbstractResolver):
                         'aiodns could not contact automatically detected DNS servers; retrying with Cloudflare DNS: %s',
                         exc,
                     )
-                    await self._aiodns.close()
+                    previous_resolver = self._aiodns
+                    assert previous_resolver is not None
+                    await previous_resolver.close()
                     self._mode = 'public'
                     self._fallback_active = True
                     self._aiodns = aiohttp.AsyncResolver(nameservers=PUBLIC_NAMESERVERS)

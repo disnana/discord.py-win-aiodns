@@ -30,7 +30,7 @@ jobs:
       - name: Run tests with coverage
         run: python -m pytest --cov=discord_win_aiodns --cov-report=term-missing
       - name: Audit installed dependencies
-        run: python -m pip_audit --strict
+        run: python -m pip_audit --strict --cache-dir .pip-audit-cache
       - name: Build distributions
         run: python -m build
       - name: Check distribution metadata
