@@ -27,7 +27,8 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
 dependencies = [
-    "aiodns>=4.0",
+    "aiodns>=3.6.1,<4; python_version < '3.10'",
+    "aiodns>=4.0; python_version >= '3.10'",
     "aiohttp>=3.8",
     "discord.py>=2.5",
 ]

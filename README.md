@@ -38,6 +38,9 @@ a whole will be faster, and it does not hide connection failures.
 - Python 3.9 or newer
 - discord.py 2.5 or newer
 
+Python 3.9 installs the compatible aiodns 3.6 series. Python 3.10 and newer
+install aiodns 4 or newer.
+
 ## Installation
 
 ```powershell
