@@ -9,8 +9,8 @@ import sys
 from typing import Callable, List, Literal, Optional, Sequence, TypeVar
 
 import aiohttp
-from aiohttp.abc import AbstractResolver, ResolveResult
 import discord
+from aiohttp.abc import AbstractResolver, ResolveResult
 from discord.ext import commands
 
 __all__ = ('Bot', 'Client', 'run')
