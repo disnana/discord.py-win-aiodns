@@ -53,8 +53,7 @@ py -3 -m pip install -U discord-py-win-aiodns
 
 ## 使い方
 
-aiohttp connector を受け取る factory 内で bot を生成し、`bot.run` の代わりに
-`run` を呼びます。
+`Bot` と `Client` は、通常の discord.py のクラスと置き換えて使えます。
 
 ```python
 import os
@@ -62,16 +61,14 @@ import os
 import discord
 from discord.ext import commands
 
-from discord_win_aiodns import run
+from discord_win_aiodns import Bot
 
-
-def create_bot(connector):
-    intents = discord.Intents.default()
-    return commands.Bot(command_prefix='!', intents=intents, connector=connector)
-
-
-run(create_bot, os.environ['DISCORD_TOKEN'])
+bot = Bot(command_prefix='!', intents=discord.Intents.default())
+bot.run(os.environ['DISCORD_TOKEN'])
 ```
+
+イベント専用の client では `discord_win_aiodns.Client` を同様に使えます。
+従来の connector factory を使う `run` も後方互換のため残っています。
 
 Discord bot token をソースコードに直接書いたり commit したりしないでください。
 PowerShell の現在のセッションへ設定してから起動します。
@@ -94,18 +91,20 @@ py .\bot.py
 Cloudflare DNS を最初から使う場合:
 
 ```python
-run(create_bot, os.environ['DISCORD_TOKEN'], resolver='public')
+bot = Bot(command_prefix='!', intents=discord.Intents.default(), resolver='public')
+bot.run(os.environ['DISCORD_TOKEN'])
 ```
 
 任意の DNS サーバーを指定する場合:
 
 ```python
-run(
-    create_bot,
-    os.environ['DISCORD_TOKEN'],
+bot = Bot(
+    command_prefix='!',
+    intents=discord.Intents.default(),
     resolver='custom',
     nameservers=['1.1.1.1'],
 )
+bot.run(os.environ['DISCORD_TOKEN'])
 ```
 
 `auto` で Cloudflare DNS を使わない場合:

@@ -6,15 +6,14 @@ import asyncio
 import logging
 import socket
 import sys
-from typing import TYPE_CHECKING, Callable, List, Literal, Optional, Sequence, TypeVar
+from typing import Callable, List, Literal, Optional, Sequence, TypeVar
 
 import aiohttp
 from aiohttp.abc import AbstractResolver, ResolveResult
+import discord
+from discord.ext import commands
 
-if TYPE_CHECKING:
-    import discord
-
-__all__ = ('run',)
+__all__ = ('Bot', 'Client', 'run')
 
 ClientT = TypeVar('ClientT', bound='discord.Client')
 ClientFactory = Callable[[aiohttp.BaseConnector], ClientT]
@@ -124,6 +123,81 @@ def _make_connector(
     return aiohttp.TCPConnector(limit=0, resolver=resolver)
 
 
+def _validate_options(resolver: ResolverMode, nameservers: Optional[Sequence[str]]) -> None:
+    if sys.platform != 'win32':
+        raise RuntimeError('discord_win_aiodns is only supported on Windows')
+    if resolver not in ('auto', 'aiodns', 'system', 'public', 'custom'):
+        raise ValueError("resolver must be 'auto', 'aiodns', 'system', 'public', or 'custom'")
+    if resolver == 'custom' and not nameservers:
+        raise ValueError("nameservers must not be empty when resolver is 'custom'")
+    if resolver != 'custom' and nameservers is not None:
+        raise ValueError("nameservers can only be used when resolver is 'custom'")
+
+
+class _AioDNSMixin:
+    """Adds selector-loop DNS resolution to a discord.py client."""
+
+    def __init__(
+        self,
+        *args,
+        resolver: ResolverMode = 'auto',
+        public_fallback: bool = True,
+        nameservers: Optional[Sequence[str]] = None,
+        **kwargs,
+    ) -> None:
+        _validate_options(resolver, nameservers)
+        self._dns_resolver = resolver
+        self._dns_public_fallback = public_fallback
+        self._dns_nameservers = nameservers
+        self._dns_connector: Optional[aiohttp.TCPConnector] = None
+        super().__init__(*args, **kwargs)
+
+    async def _async_setup_hook(self) -> None:
+        await super()._async_setup_hook()
+        self._dns_connector = _make_connector(
+            self._dns_resolver,
+            self._dns_public_fallback,
+            self._dns_nameservers,
+        )
+        self.http.connector = self._dns_connector
+
+    async def _close_dns_connector(self) -> None:
+        if self._dns_connector is not None:
+            await self._dns_connector.close()
+            self._dns_connector = None
+
+    def run(self, token: str, *, reconnect: bool = True, **kwargs) -> None:
+        _validate_options(self._dns_resolver, self._dns_nameservers)
+        loop = asyncio.SelectorEventLoop()
+        try:
+            asyncio.set_event_loop(loop)
+            loop.run_until_complete(_start_existing(self, token, reconnect))
+        except KeyboardInterrupt:
+            pass
+        finally:
+            try:
+                loop.run_until_complete(loop.shutdown_asyncgens())
+            finally:
+                asyncio.set_event_loop(None)
+                loop.close()
+
+
+class Client(_AioDNSMixin, discord.Client):
+    """A :class:`discord.Client` with Windows aiodns support."""
+
+
+class Bot(_AioDNSMixin, commands.Bot):
+    """A :class:`commands.Bot` with Windows aiodns support."""
+
+
+async def _start_existing(client: discord.Client, token: str, reconnect: bool) -> None:
+    try:
+        async with client:
+            await client.start(token, reconnect=reconnect)
+    finally:
+        await client._close_dns_connector()  # type: ignore[attr-defined]
+
+
 async def _start(
     client_factory: ClientFactory[ClientT],
     token: str,
@@ -163,14 +237,7 @@ def run(
     server addresses passed to aiodns.
     """
 
-    if sys.platform != 'win32':
-        raise RuntimeError('discord_win_aiodns is only supported on Windows')
-    if resolver not in ('auto', 'aiodns', 'system', 'public', 'custom'):
-        raise ValueError("resolver must be 'auto', 'aiodns', 'system', 'public', or 'custom'")
-    if resolver == 'custom' and not nameservers:
-        raise ValueError("nameservers must not be empty when resolver is 'custom'")
-    if resolver != 'custom' and nameservers is not None:
-        raise ValueError("nameservers can only be used when resolver is 'custom'")
+    _validate_options(resolver, nameservers)
 
     loop = asyncio.SelectorEventLoop()
     try:

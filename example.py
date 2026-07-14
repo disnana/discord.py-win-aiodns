@@ -3,7 +3,7 @@ import os
 import discord
 from discord.ext import commands
 
-from discord_win_aiodns import run
+from discord_win_aiodns import Bot
 
 TOKEN = os.environ['DISCORD_TOKEN']
 
@@ -17,9 +17,5 @@ NAMESERVERS = None
 # NAMESERVERS = ['1.1.1.1']
 
 
-def create_bot(connector):
-    intents = discord.Intents.default()
-    return commands.Bot(command_prefix='!', intents=intents, connector=connector)
-
-
-run(create_bot, TOKEN, resolver=RESOLVER, nameservers=NAMESERVERS)
+bot = Bot(command_prefix='!', intents=discord.Intents.default(), resolver=RESOLVER, nameservers=NAMESERVERS)
+bot.run(TOKEN)
