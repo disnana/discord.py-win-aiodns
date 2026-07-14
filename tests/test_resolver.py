@@ -4,6 +4,9 @@ import sys
 import unittest
 from unittest import mock
 
+import discord
+from discord.ext import commands
+
 import discord_win_aiodns
 from discord_win_aiodns import FALLBACK_TIMEOUT, FALLBACK_TRIES, PUBLIC_NAMESERVERS, _FallbackResolver
 
@@ -148,6 +151,13 @@ class FallbackResolverTests(unittest.TestCase):
 
 
 class RunValidationTests(unittest.TestCase):
+    def test_client_and_bot_are_drop_in_replacements(self):
+        client = discord_win_aiodns.Client(intents=discord.Intents.none(), resolver='system')
+        bot = discord_win_aiodns.Bot(command_prefix='!', intents=discord.Intents.none(), resolver='system')
+
+        self.assertIsInstance(client, discord.Client)
+        self.assertIsInstance(bot, commands.Bot)
+
     def test_rejects_invalid_resolver_mode(self):
         from discord_win_aiodns import run
 
