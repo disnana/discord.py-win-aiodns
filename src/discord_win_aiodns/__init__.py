@@ -153,13 +153,13 @@ class _AioDNSMixin:
         super().__init__(*args, **kwargs)
 
     async def _async_setup_hook(self) -> None:
-        await super()._async_setup_hook()
+        await super()._async_setup_hook()  # type: ignore[misc]
         self._dns_connector = _make_connector(
             self._dns_resolver,
             self._dns_public_fallback,
             self._dns_nameservers,
         )
-        self.http.connector = self._dns_connector
+        self.http.connector = self._dns_connector  # type: ignore[attr-defined]
 
     async def _close_dns_connector(self) -> None:
         if self._dns_connector is not None:
@@ -171,7 +171,7 @@ class _AioDNSMixin:
         loop = asyncio.SelectorEventLoop()
         try:
             asyncio.set_event_loop(loop)
-            loop.run_until_complete(_start_existing(self, token, reconnect))
+            loop.run_until_complete(_start_existing(self, token, reconnect))  # type: ignore[arg-type]
         except KeyboardInterrupt:
             pass
         finally:
